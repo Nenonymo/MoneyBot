@@ -1,5 +1,5 @@
 # MoneyBot
-Discord bot creating economy on the server
+Discord bot creating economy on the server with sql database management
 
 
 invite him with :
