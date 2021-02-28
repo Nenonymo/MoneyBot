@@ -1,4 +1,4 @@
-DO NOT MODIFY SPACING/LINING
+DO NOT MODIFY SPACING/LINING !!! It will mess with the parsing !
 
 Bot-Token :
 [write your bot token here]
@@ -8,4 +8,4 @@ User = root
 Password = rootPW
 Host = localhost
 Port = 3306
-Database = moneybot
+Database = moneybot_v2
