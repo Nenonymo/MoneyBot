@@ -72,7 +72,7 @@ def createBankAccount (cursor, conn, servID, uID, uName): #Works perfectly
 
 def getMoneyAmounts (cursor, connection, servID): #Works perfectly
     try:
-        cursor.execute("SELECT userID, name, moneyAmount FROM userserver WHERE serverID=? ORDER BY moneyAmount DESC", (servID,))
+        cursor.execute("SELECT userID, name, moneyAmount FROM userserver WHERE serverID=? ORDER BY moneyAmount DESC, name", (servID,))
         moneyTable = [(k,n,v) for (k, n, v) in cursor]
         return(moneyTable)
     except mariadb.Error as e:
