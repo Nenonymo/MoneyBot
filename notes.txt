@@ -1,7 +1,7 @@
 DO NOT MODIFY SPACING/LINING
 
 Bot-Token :
-ODE1Mjg4NzY0MjQ2MzkyODgz.YDqO1A.fDSJdlFMOmdPOlJ9s9ZAtqSHwkM
+[write your bot token here]
 
 DB Access:
 User = root
