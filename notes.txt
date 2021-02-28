@@ -1,6 +1,11 @@
+DO NOT MODIFY SPACING/LINING
+
 Bot-Token :
 ODE1Mjg4NzY0MjQ2MzkyODgz.YDqO1A.fDSJdlFMOmdPOlJ9s9ZAtqSHwkM
 
 DB Access:
-ID = "root"
-Password = "rootPW"
+User = root
+Password = rootPW
+Host = localhost
+Port = 3306
+Database = moneybot
