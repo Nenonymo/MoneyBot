@@ -63,7 +63,7 @@ def createBankAccount (cursor, conn, servID, uID, uName): #Works perfectly
         for nbr in cursor:
             if nbr[0] != 0:
                 return(1)
-        cursor.execute("INSERT INTO userserver (serverID, userID, moneyAmount, name) VALUES (?, ?, ?, ?)", (servID, uID, 200, uName)) #insertion couple servID/uID
+        cursor.execute("INSERT INTO userserver (serverID, userID, moneyAmount, name, InterractionsAmount) VALUES (?, ?, ?, ?, ?)", (servID, uID, 200, uName, 0)) #insertion couple servID/uID
         conn.commit()
         return(0)
     except mariadb.Error as e:
@@ -74,6 +74,15 @@ def getMoneyAmounts (cursor, connection, servID): #Works perfectly
     try:
         cursor.execute("SELECT userID, name, moneyAmount FROM userserver WHERE serverID=? ORDER BY moneyAmount DESC", (servID,))
         moneyTable = [(k,n,v) for (k, n, v) in cursor]
+        return(moneyTable)
+    except mariadb.Error as e:
+        print(e)
+        return
+
+def getMoneyAmount1Account (cursor, connection, servID, uID):
+    try:
+        cursor.execute("SELECT moneyAmount FROM userserver WHERE serverID=? AND userID=? ORDER BY moneyAmount DESC", (servID,uID))
+        moneyTable = [a for a in cursor]
         return(moneyTable)
     except mariadb.Error as e:
         print(e)
@@ -118,4 +127,14 @@ def work(cursor, conn, servID, chanID, uID): #Works perfectly
     except mariadb.Error as e:
         print(e)
         return 2 #critical failure signal
+
+def incrementInterractions(cursor, conn, servID, uID):
+    try:
+        cursor.execute("UPDATE userserver SET InterractionsAmount = 1 + InterractionsAmount WHERE ServerID=? AND UserID=?", (servID, uID))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
+
 
