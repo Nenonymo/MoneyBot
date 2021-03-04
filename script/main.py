@@ -83,7 +83,7 @@ class MyClient(discord.Client):
                 #######
                 
                 for i in range(0, min(10, len(accountList))):
-                    msgStr = "{}\n{} {} : {}$".format(msgStr, emote[i], accountList[i][1], accountList[i][2])
+                    msgStr = "{}\n{} {} : {:.2f}$".format(msgStr, emote[i], accountList[i][1], accountList[i][2])
 
                 embed=discord.Embed(color=0x7aff9c)
                 embed.add_field(name="TOP 10 Richest Users", value=msgStr, inline=False)
@@ -135,37 +135,41 @@ class MyClient(discord.Client):
                 for (stockID, alias) in cursor:
                     print(stockID, alias)
                     price = stockManipulation.lastValue(stockID)['close']
-                    msg = "{}{} :arrow_forward: {:.2f} :arrow_forward: {}\n".format(msg, stockID, price, alias)
+                    msg = "{}{} :arrow_forward: {:.5f} :arrow_forward: {}\n".format(msg, stockID, price, alias)
                 embed=discord.Embed(color=0x7aff9c)
                 embed.add_field(name="List of the stocks advailable", value=msg)
                 await message.channel.send(embed=embed)
 
             elif message.content.startswith('$stock buy'):
                 args = message.content[11:].split(sep=' ')
-                print(args)
                 stockAmount = stockManipulation.lastValue(args[0])['close']
-                print(stockAmount)
                 sig = dataCollection.buyStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
-                if sig==0: await message.channel.send('Successful purchase')
+                if sig==0: await message.channel.send('Successful purchase: {}*{} for {}$'.format(args[1], args[0], stockAmount))
                 elif sig==1: await message.channel.send('You don\'t have enough money')
                 elif sig==2: await message.channel.send('The purchase didn\'t worked')
             
             elif message.content.startswith('$stock sell'):
                 args = message.content[12:].split(sep=' ')
-                print(args)
                 stockAmount = stockManipulation.lastValue(args[0])['close']
-                print(stockAmount)
                 sig = dataCollection.sellStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
-                if sig==0: await message.channel.send('Successful sale')
+                if sig==0: await message.channel.send('Successful sale: {}*{} for {}$'.format(args[1], args[0], stockAmount))
                 elif sig==1: await message.channel.send('You don\'t have enough stock')
                 elif sig==2: await message.channel.send('The sale didn\'t worked')
+
+            elif message.content.startswith('$stock value'):
+                args = message.content[13:].split(sep=' ')
+                stockAmount = stockManipulation.lastValue(args[0])['close']
+                await message.channel.send('This stock value is now {:.5f}$.'.format(stockAmount))
 
             elif message.content.startswith('$stock wallet'):
                 stockTable = dataCollection.getStockWallet(cursor, connection, message.guild.id, message.author.id)
                 msg = ''
+                total = 0
                 for (i, v) in stockTable:
                     if v != 0:
                         msg = '{}{} :arrow_forward: {}\n'.format(msg, i, v)
+                        total += stockManipulation.lastValue(i)['close'] * int(v)
+                msg = "{}Estimation of the assets values: {:.2f}$".format(msg, total)
                 embed=discord.Embed(color=0x7aff9c)
                 embed.add_field(name='{}\'s stock wallet'.format(message.author.name), value=msg)
                 await message.channel.send(embed=embed)
