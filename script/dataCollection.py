@@ -137,4 +137,56 @@ def incrementInterractions(cursor, conn, servID, uID):
         print(e)
         return(2)
 
+def newStock(cursor, conn, stockID, stockAlias):
+    try:
+        cursor.execute("INSERT INTO stocks (stockid, alias) VALUES (?, ?)", (stockID, stockAlias))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
 
+def buyStock(cursor, conn, servID, uID, stockID, amount, stockAmount):
+    try:
+        '''
+        cursor.execute('SELECT moneyAmount FROM userserver WHERE userid=? AND serverid=?', (uID, servID))
+        for (i) in cursor:
+            moneyAmount = i
+            pass
+        '''
+        moneyAmount = getMoneyAmount1Account(cursor, conn, servID, uID)
+        if moneyAmount[0][0] < (int(amount) * stockAmount): return(1) #not enough money
+        cursor.execute('INSERT INTO userserverstock (userID, serverID, stockID, value) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE value = value + ?', (uID, servID, stockID, amount, amount))
+        nA = moneyAmount[0][0] - (int(amount) * stockAmount)
+        cursor.execute('UPDATE userserver SET moneyamount = ? WHERE serverid=? AND userID=?', (nA, servID, uID))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
+
+def sellStock(cursor, conn, servID, uID, stockID, amount, stockAmount):
+    try:
+        cursor.execute('SELECT value FROM userserverstock WHERE userid=? AND serverid=? AND stockid=?', (uID, servID, stockID))
+        for (i) in cursor:
+            stockPossessed = i
+            pass
+        if stockPossessed[0] < int(amount): return(1) #not enough money
+        moneyAmount = getMoneyAmount1Account(cursor, conn, servID, uID)
+        cursor.execute('INSERT INTO userserverstock (userID, serverID, stockID, value) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE value = value - ?', (uID, servID, stockID, amount, amount))
+        nA = moneyAmount[0][0] + (int(amount) * stockAmount)
+        cursor.execute('UPDATE userserver SET moneyamount = ? WHERE serverid=? AND userID=?', (nA, servID, uID))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
+
+def getStockWallet(cursor, conn, servID, uID):
+    try:
+        cursor.execute('SELECT stockID, value FROM userserverstock WHERE userid=? AND serverid=?', (uID, servID))
+        outTable = [(sid, val) for (sid, val) in cursor]
+        return(outTable)
+    except mariadb.Error as e:
+        print(e)
+        return(2)

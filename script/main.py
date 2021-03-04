@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 
 import dataCollection
+import stockManipulation
 
 ######################
 # Configuration File #
@@ -112,6 +113,63 @@ class MyClient(discord.Client):
             elif message.content.startswith('$bankaccount consult'):
                 sold = dataCollection.getMoneyAmount1Account(cursor, connection, message.guild.id, message.author.id)
                 await message.channel.send("Your bank account is currently {}$ <@!{}> !".format(sold[0][0], message.author.id))
+
+            elif message.content.startswith('$stock create'):
+                args = message.content[14:].split(sep=' ')
+                sig = dataCollection.newStock(cursor, connection, args[0], args[1])
+                if sig == 0: await message.channel.send("Stock created successfully")
+                elif sig == 2: await message.channel.send("Stock creation didn't worked")
+
+            elif message.content.startswith('$stock graph'):
+                args = message.content[13:].split(sep=' ')
+                stockManipulation.graph1Day(args[0])
+                stockManipulation.graph1Month(args[0])
+                stockManipulation.graph6Month(args[0])
+                await message.channel.send(file=discord.File('images/graph1D.png'))
+                await message.channel.send(file=discord.File('images/graph1M.png'))
+                await message.channel.send(file=discord.File('images/graph6M.png'))
+
+            elif message.content.startswith('$stock list'):
+                msg=''
+                cursor.execute('SELECT * FROM stocks')
+                for (stockID, alias) in cursor:
+                    print(stockID, alias)
+                    price = stockManipulation.lastValue(stockID)['close']
+                    msg = "{}{} :arrow_forward: {:.2f} :arrow_forward: {}\n".format(msg, stockID, price, alias)
+                embed=discord.Embed(color=0x7aff9c)
+                embed.add_field(name="List of the stocks advailable", value=msg)
+                await message.channel.send(embed=embed)
+
+            elif message.content.startswith('$stock buy'):
+                args = message.content[11:].split(sep=' ')
+                print(args)
+                stockAmount = stockManipulation.lastValue(args[0])['close']
+                print(stockAmount)
+                sig = dataCollection.buyStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
+                if sig==0: await message.channel.send('Successful purchase')
+                elif sig==1: await message.channel.send('You don\'t have enough money')
+                elif sig==2: await message.channel.send('The purchase didn\'t worked')
+            
+            elif message.content.startswith('$stock sell'):
+                args = message.content[12:].split(sep=' ')
+                print(args)
+                stockAmount = stockManipulation.lastValue(args[0])['close']
+                print(stockAmount)
+                sig = dataCollection.sellStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
+                if sig==0: await message.channel.send('Successful sale')
+                elif sig==1: await message.channel.send('You don\'t have enough stock')
+                elif sig==2: await message.channel.send('The sale didn\'t worked')
+
+            elif message.content.startswith('$stock wallet'):
+                stockTable = dataCollection.getStockWallet(cursor, connection, message.guild.id, message.author.id)
+                msg = ''
+                for (i, v) in stockTable:
+                    if v != 0:
+                        msg = '{}{} :arrow_forward: {}\n'.format(msg, i, v)
+                embed=discord.Embed(color=0x7aff9c)
+                embed.add_field(name='{}\'s stock wallet'.format(message.author.name), value=msg)
+                await message.channel.send(embed=embed)
+
         if message.content.startswith('$'):
             i = dataCollection.incrementInterractions(cursor, connection, message.guild.id, message.author.id)
 
