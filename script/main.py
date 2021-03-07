@@ -136,6 +136,7 @@ class MyClient(discord.Client):
                     print(stockID, alias)
                     price = stockManipulation.lastValue(stockID)['close']
                     msg = "{}{} :arrow_forward: {:.5f} :arrow_forward: {}\n".format(msg, stockID, price, alias)
+                print(msg)
                 embed=discord.Embed(color=0x7aff9c)
                 embed.add_field(name="List of the stocks advailable", value=msg)
                 await message.channel.send(embed=embed)
