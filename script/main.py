@@ -77,10 +77,6 @@ class MyClient(discord.Client):
                     ':white_circle:',':blue_circle:',':green_circle:',
                     ':yellow_circle:',':orange_circle:',':red_circle:',
                     ':brown_circle:']
-
-                #######
-                # fonction de tri décroissant
-                #######
                 
                 for i in range(0, min(10, len(accountList))):
                     msgStr = "{}\n{} {} : {:.2f}$".format(msgStr, emote[i], accountList[i][1], accountList[i][2])
@@ -95,6 +91,8 @@ class MyClient(discord.Client):
                 sig = dataCollection.defineWorkChannel(cursor, connection, message.guild.id, args[0][2:20], args[1])
                 if sig == 0: await message.channel.send("Work channel setted up perfectly !")
                 elif sig == 2: await message.channel.send("The work channel setup didn't worked...")
+
+        
 
             elif message.content.startswith('$work'): #Works perfectly
                 sig = dataCollection.work(cursor, connection, message.guild.id, message.channel.id, message.author.id)
