@@ -2,8 +2,12 @@
 
 
 import discord
+from discord.ext import commands
+from discord.utils import get
+
 import os
 from datetime import datetime
+
 
 import dataCollection
 import stockManipulation
@@ -48,6 +52,7 @@ class MyClient(discord.Client):
         # Commands #
         ############
         elif message.content.startswith('$'):
+            i = dataCollection.incrementInterractions(cursor, connection, message.guild.id, message.author.id) #+1 interractions amount
             #log the command
             with open('botCommands.log', 'a') as f: #open the file in 'append' mode
                 f.write('{} : {} : {} : {}\n'.format( #write the following string
@@ -85,6 +90,22 @@ class MyClient(discord.Client):
                 embed.add_field(name="TOP 10 Richest Users", value=msgStr, inline=False)
                 await message.channel.send(embed=embed)
 
+            elif message.content.startswith('$list topActive'): #Works but not done
+                '''Show the top 10 active peoples on the server'''
+                accountList = dataCollection.getInteractionsClassment(cursor, connection, message.guild.id)
+                msgStr = "Here are the top 10 accounts:"
+                emote = [':first_place:',':second_place:',':third_place:',
+                    ':white_circle:',':blue_circle:',':green_circle:',
+                    ':yellow_circle:',':orange_circle:',':red_circle:',
+                    ':brown_circle:']
+                
+                for i in range(0, min(10, len(accountList))):
+                    msgStr = "{}\n{} {} : {}".format(msgStr, emote[i], accountList[i][0], accountList[i][1])
+
+                embed=discord.Embed(color=0x7aff9c)
+                embed.add_field(name="TOP 10 active users", value=msgStr, inline=False)
+                await message.channel.send(embed=embed)
+
             elif message.content.startswith('$settings work'): #Works perfectly
                 '''Setup the work channel, use like this: "$settings work [tag channel] [montant] [cooldown]'''
                 args = message.content[15:].split(sep=' ')
@@ -101,7 +122,8 @@ class MyClient(discord.Client):
                 elif sig == 2: await message.channel.send("<@!{}> There is a critical failure in the bot. Please, report this.".format(message.author.id))
 
             elif message.content.startswith('$bankaccount transfer'): #seems to work
-                args = message.content[16:].split(sep=' ')
+                args = message.content[22:].split(sep=' ')
+                print(args)
                 args[0] = args[0][3:21]
                 sig = dataCollection.moneyTransfer(cursor, connection, message.guild.id, message.author.id, args[0], args[1])
                 if sig == 0: await message.channel.send("<@!{}> Transfer successfull".format(message.author.id))
@@ -131,8 +153,8 @@ class MyClient(discord.Client):
                 msg=''
                 cursor.execute('SELECT * FROM stocks')
                 for (stockID, alias) in cursor:
-                    print(stockID, alias)
-                    price = stockManipulation.lastValue(stockID)['close']
+                    price = stockManipulation.lastValue(stockID)
+                    print("{} : {} : {}".format(stockID, alias, price)) 
                     msg = "{}{} :arrow_forward: {:.5f} :arrow_forward: {}\n".format(msg, stockID, price, alias)
                 print(msg)
                 embed=discord.Embed(color=0x7aff9c)
@@ -141,7 +163,7 @@ class MyClient(discord.Client):
 
             elif message.content.startswith('$stock buy'):
                 args = message.content[11:].split(sep=' ')
-                stockAmount = stockManipulation.lastValue(args[0])['close']
+                stockAmount = stockManipulation.lastValue(args[0])
                 sig = dataCollection.buyStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
                 if sig==0: await message.channel.send('Successful purchase: {}*{} for {}$'.format(args[1], args[0], stockAmount))
                 elif sig==1: await message.channel.send('You don\'t have enough money')
@@ -149,7 +171,7 @@ class MyClient(discord.Client):
             
             elif message.content.startswith('$stock sell'):
                 args = message.content[12:].split(sep=' ')
-                stockAmount = stockManipulation.lastValue(args[0])['close']
+                stockAmount = stockManipulation.lastValue(args[0])
                 sig = dataCollection.sellStock(cursor, connection, message.guild.id, message.author.id, args[0], args[1], stockAmount)
                 if sig==0: await message.channel.send('Successful sale: {}*{} for {}$'.format(args[1], args[0], stockAmount))
                 elif sig==1: await message.channel.send('You don\'t have enough stock')
@@ -157,7 +179,7 @@ class MyClient(discord.Client):
 
             elif message.content.startswith('$stock value'):
                 args = message.content[13:].split(sep=' ')
-                stockAmount = stockManipulation.lastValue(args[0])['close']
+                stockAmount = stockManipulation.lastValue(args[0])
                 await message.channel.send('This stock value is now {:.5f}$.'.format(stockAmount))
 
             elif message.content.startswith('$stock wallet'):
@@ -167,14 +189,53 @@ class MyClient(discord.Client):
                 for (i, v) in stockTable:
                     if v != 0:
                         msg = '{}{} :arrow_forward: {}\n'.format(msg, i, v)
-                        total += stockManipulation.lastValue(i)['close'] * int(v)
+                        total += stockManipulation.lastValue(i) * int(v)
                 msg = "{}Estimation of the assets values: {:.2f}$".format(msg, total)
                 embed=discord.Embed(color=0x7aff9c)
                 embed.add_field(name='{}\'s stock wallet'.format(message.author.name), value=msg)
                 await message.channel.send(embed=embed)
+            
+            elif message.content.startswith('$radd'): #RID, SID, cost, costsell, alias
+                args = message.content[6:].split(sep=' ')
+                sig = dataCollection.insertRole(cursor, connection, args[0], message.guild.id, args[1], args[2], args[3])
+                if sig == 0: await message.channel.send('role data succesfully inserted')
+                elif sig == 2: await message.channel.send('didn\'t worked')
 
-        if message.content.startswith('$'):
-            i = dataCollection.incrementInterractions(cursor, connection, message.guild.id, message.author.id)
+            elif message.content.startswith('$rolebuy '): #$rolebuy
+                try:
+                    roles = dataCollection.getRoleList(cursor, connection, message.guild.id)
+                    arg = message.content[9:].split(' ')             
+                    roleSelected = roles[arg[0]] 
+                    print(roleSelected)
+                    print(arg)
+                    role = discord.utils.get(message.guild.roles, name=roleSelected[0])
+                    am = dataCollection.getMoneyAmount1Account(cursor, connection, message.guild.id, message.author.id)
+                    if am[0][0] < roleSelected[1]:
+                        await message.channel.send('sorry {} but you don\'t have enough money.')
+                        return()
+                    dataCollection.changeMoneyAmount(cursor, connection, message.guild.id, message.author.id, -roleSelected[1])
+                    await message.author.add_roles(role)
+                    await message.channel.send('Role bought succesfully !!!')
+                except:
+                    await message.channel.send('The sale didn\'t worked as expected... Please report this !')
+            
+            elif message.content.startswith('$rolelist'):
+                roles = dataCollection.getRoleList(cursor, connection, message.guild.id)
+                msg = ''
+                print(roles.items())
+                for (k, v) in roles.items():
+                    msg = "{}{} -> {}\n".format(msg, k, v[1])
+                embed=discord.Embed(color=0xff5100)
+                embed.add_field(name='Roles to buy :', value=msg)
+                await message.channel.send(embed=embed)
+
+            elif message.content.startswith('$update'):
+                args = message.content[8:].split(' ')
+                print(args)
+                target = args[0][3:21]
+                sig = dataCollection.changeMoneyAmount(cursor, connection, message.guild.id, target, args[1])
+                if sig == 0: await message.channel.send('Bank account updated')
+                elif sig == 2: await message.channel.send('Bank account not updated')
 
 ##############
 # Bot Launch #

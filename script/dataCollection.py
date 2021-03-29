@@ -190,3 +190,41 @@ def getStockWallet(cursor, conn, servID, uID):
     except mariadb.Error as e:
         print(e)
         return(2)
+
+def getInteractionsClassment(cursor, conn, servID):
+    try:
+        cursor.execute('SELECT name, interractionsAmount FROM userserver WHERE serverID=? ORDER BY interractionsamount DESC', (servID,))
+        outTable = [(name, inter) for (name, inter) in cursor]
+        return(outTable)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
+
+def getRoleList(cursor, conn, servID):
+    try:
+        cursor.execute('SELECT * FROM ServerRole WHERE ServerID=? ORDER BY cost', (servID,))
+        rep = {}
+        for roleID, servID, cost, costSell, alias in cursor:
+            rep[alias] = (roleID, cost, costSell)
+        return(rep)
+    except mariadb.Error as e:
+        print(e)
+        return()
+
+def insertRole(cursor, conn, roleID, servID, cost, costSell, alias):
+    try:
+        cursor.execute('INSERT INTO ServerRole (roleid, serverID, cost, costSell, alias) VALUES (?,?,?,?,?)', (roleID, servID, cost, costSell, alias))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)
+
+def changeMoneyAmount(cursor, conn, servID, uID, amount):
+    try:
+        cursor.execute('UPDATE userServer SET moneyAmount = moneyAmount+? WHERE serverID=? AND userID=?', (amount, servID, uID))
+        conn.commit()
+        return(0)
+    except mariadb.Error as e:
+        print(e)
+        return(2)

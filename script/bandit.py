@@ -5,4 +5,5 @@ from random import randint
 rouleaux = [[]]
 
 
-def tirageRouleaux
+def tirageRouleaux():
+    pass

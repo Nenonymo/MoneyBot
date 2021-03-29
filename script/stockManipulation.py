@@ -4,6 +4,7 @@ import pandas as pd
 
 #Data source
 import yfinance as yf
+from yahoo_fin import stock_info as si
 
 #Data viz
 import plotly.graph_objs as go #need kaleido to work
@@ -11,10 +12,7 @@ import plotly.graph_objs as go #need kaleido to work
 
 
 def lastValue(stockID):
-    data = yf.download(tickers=stockID, period='2h', interval='1m')
-    dataOut = {'x': data.index[-1], 'open':data['Open'][-1] ,'high':data['High'][-1], 
-            'low':data['Low'][-1],'close':data['Close'][-1], 'volume':data['Volume'][-1]}
-    return(dataOut)
+    return(si.get_live_price(stockID))
 
 def graph1Day(stockID):
     data = yf.download(tickers=stockID, period='1d', interval='1m')
